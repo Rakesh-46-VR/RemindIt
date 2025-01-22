@@ -3,13 +3,15 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QTimer
 
-class MainWindow(QMainWindow):
+class Dashboard(QMainWindow):
+    
     def __init__(self):
         super().__init__()
+        
+        self.windowPosSize = (200, 200, 800, 600)
 
         # Set main window title and size
-        self.setWindowTitle("RemindIt")
-        self.resize(800, 600)
+        self.setGeometry(*self.windowPosSize)
 
         # Create a central widget
         central_widget = QWidget()
@@ -32,6 +34,7 @@ class MainWindow(QMainWindow):
         self.left_sidebar = QWidget(self)
         self.left_sidebar.setFixedWidth(200)
         self.left_sidebar.setStyleSheet("""
+            background-color: #121212;
             border-right: 1px solid #cccccc;
         """)
         # Add content to the sidebar
@@ -126,6 +129,6 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
     import sys
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = Dashboard()
     window.show()
     sys.exit(app.exec())
