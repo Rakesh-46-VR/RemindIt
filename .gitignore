@@ -141,8 +141,8 @@ celerybeat.pid
 .wav
 
 # pickle
-.pickle
-.pkl
+*.pickle
+*.pkl
 
 # Environments
 .env
