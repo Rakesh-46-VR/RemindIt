@@ -1,33 +1,47 @@
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QToolBar, QStatusBar, QWidget, QVBoxLayout, QPushButton, QGroupBox
+    QApplication, QToolBar, QStatusBar, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy, QLabel
 )
 from PyQt6.QtCore import QTimer
+from ui.Picture import Logo
+from supabase import Client
 
-class Dashboard(QMainWindow):
+class Dashboard(QWidget):
     
-    def __init__(self):
-        super().__init__()
-        
+    def __init__(self, client:Client, parent=None):
+        super().__init__(parent)
+        self.supabase = client
         self.windowPosSize = (200, 200, 800, 600)
-
         # Set main window title and size
         self.setGeometry(*self.windowPosSize)
 
-        # Create a central widget
-        central_widget = QWidget()
-        central_layout = QVBoxLayout()
-        central_layout.setContentsMargins(0, 0, 0, 0)
-        central_widget.setLayout(central_layout)
-        self.setCentralWidget(central_widget)
+        # Main layout (Vertical)
+        self.main_layout = QVBoxLayout()
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.setLayout(self.main_layout)
+
+        self.createTaskbar()
+        self.createCentralArea()
+        self.createStatusbar()
+        self.createFloatingButton()
         
-        # Add a left sidebar (Dock Widget)
+    def createCentralArea(self):
+        # Central layout (Horizontal)
+        self.central_layout = QHBoxLayout()
+        self.central_layout.setContentsMargins(0, 0, 0, 0)
+        self.central_layout.setSpacing(0)
+        # Add the central layout to the main layout
+        self.main_layout.addLayout(self.central_layout)
+
+        # Create the left sidebar
         self.createLeftSidebar()
 
-        # Add a taskbar (Toolbar)
-        self.createTaskbar()
-
-        # Add a bottom status bar
-        self.createStatusbar()
+        # Create a placeholder for the main content
+        self.main_content = QWidget()
+        self.main_content.setStyleSheet("""
+            background-color: #272627;
+        """)
+        self.central_layout.addWidget(self.main_content)
 
     def createLeftSidebar(self):
         # Create a fixed left sidebar
@@ -35,69 +49,98 @@ class Dashboard(QMainWindow):
         self.left_sidebar.setFixedWidth(200)
         self.left_sidebar.setStyleSheet("""
             background-color: #121212;
-            border-right: 1px solid #cccccc;
+            border-right: 1px solid #585858;
         """)
-        # Add content to the sidebar
+        
+        # Sidebar layout
         sidebar_layout = QVBoxLayout()
-        self.left_sidebar.setLayout(sidebar_layout)
-
         sidebar_layout.setSpacing(10)
+        sidebar_layout.setContentsMargins(10, 10, 10, 10)
+        self.left_sidebar.setLayout(sidebar_layout)
 
         sidebar_layout.addWidget(QPushButton("Task List"))
         sidebar_layout.addWidget(QPushButton("View Progress"))
-
         sidebar_layout.addStretch()
-        
-        # Add the sidebar to the central layout
-        self.centralWidget().layout().addWidget(self.left_sidebar)
 
-        # Create a toggle button
-        self.toggle_button = QPushButton(">>", self)
-        self.toggle_button.setToolTip("Sidebar")
-        self.toggle_button.setFixedWidth(22)  # Narrow button width
-        self.toggle_button.setStyleSheet("""             
-            border: 1px solid #cccccc
-        """)
-        self.setStyleSheet("""
-            QToolTip {
-                background-color: #ffffff;
-                color: black;
-                border: 4px solid #000000;
-                font-size: 10px;
-                padding: 3px;
-            }
-        """)
-        self.toggle_button.clicked.connect(self.toggleLeftSidebar)
-        QTimer.singleShot(0, self.updateToggleButtonPosition)
+        # Add the sidebar to the central layout
+        self.central_layout.addWidget(self.left_sidebar)
 
     def updateToggleButtonPosition(self):
         if self.left_sidebar.isVisible():
             # Position the button on the right border of the sidebar
-            self.toggle_button.move(199, 30)
+            self.toggle_button.setText("<<")
+            self.toggle_button.move(199, 41)
         else:
             # Position the button near the left border of the window
-            self.toggle_button.move(0, 30)
+            self.toggle_button.setText(">>")
+            self.toggle_button.move(0, 41)
+
+    def createFloatingButton(self):
+        # Create a toggle button that floats above other widgets
+        self.toggle_button = QPushButton(">>", self)
+        self.toggle_button.setToolTip("Toggle Sidebar")
+        self.toggle_button.setFixedWidth(25)
+        self.toggle_button.setFixedHeight(25)
+        self.toggle_button.setStyleSheet("""
+            QPushButton {
+                border: 1px solid #585858;
+            }
+        """)
+        # Make it clickable
+        self.toggle_button.clicked.connect(self.toggleLeftSidebar)
+        QTimer.singleShot(0, self.updateToggleButtonPosition)
 
     def createTaskbar(self):
         # Create a toolbar for the taskbar
         taskbar = QToolBar("Taskbar", self)
+        taskbar.setMovable(False)
+
+        # Add left-aligned actions
         taskbar.addAction("Menu")
         taskbar.addAction("Edit")
         taskbar.addAction("Tools")
-        taskbar.setMovable(False)
-        self.addToolBar(taskbar)
+        
+        # Add a spacer to push subsequent items to the right
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        taskbar.addWidget(spacer)
 
-    def createStatusbar(self):
-        # Create a status bar at the bottom of the window
-        status_bar = QStatusBar()
-        status_bar.setStyleSheet("""
-            QStatusBar {
-                border-top : 1px solid #cccccc;
+        user = self.supabase.auth.get_user().user
+
+        label = QLabel()
+        label.setText(user.user_metadata['name'])
+
+        # Add right-aligned widget (e.g., logo)
+        url = user.user_metadata['avatar_url']
+        logo = Logo(url, [20, 20], is_url=True)
+
+        taskbar.addWidget(label)
+        taskbar.addWidget(logo)
+
+        # Style the toolbar
+        taskbar.setStyleSheet("""
+            QToolBar {
+                background-color: #121212;
+                border-top: 1px solid #585858;
+                border-bottom: 1px solid #585858;
             }
         """)
 
+        # Add the taskbar to the main layout
+        self.main_layout.addWidget(taskbar)
+
+    def createStatusbar(self):
+        # Create a status bar at the bottom of the window
+        self.status_bar = QStatusBar()
+        self.status_bar.setStyleSheet("""
+            QStatusBar {
+                background-color: #121212;
+                border-top : 1px solid #585858;
+            }
+        """)
+        self.status_bar.setFixedHeight(25)
+
         button1 = QPushButton(".")
-        
         button1.setStyleSheet("""
             QPushButton {
                 width : 5px;
@@ -108,9 +151,11 @@ class Dashboard(QMainWindow):
             }
         """)
 
-        self.setStatusBar(status_bar)
-        status_bar.addWidget(button1)
-        status_bar.showMessage(f"\t\t\tReady")
+        self.status_bar.addWidget(button1)
+        self.status_bar.showMessage(f"\t\t\tReady")
+
+        # Add the status bar to the main layout
+        self.main_layout.addWidget(self.status_bar)
 
     def toggleLeftSidebar(self):
         if self.left_sidebar.isVisible():
@@ -118,12 +163,12 @@ class Dashboard(QMainWindow):
         else:
             self.left_sidebar.show()
         
-        # Update the position of the toggle button
-        self.updateToggleButtonPosition()
+        # Update the toggle button text
+        self.toggle_button.setText("<<")
+        self.toggle_button.move(199, 41)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.updateToggleButtonPosition()
 
 # Application setup
 if __name__ == "__main__":
