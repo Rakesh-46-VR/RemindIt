@@ -86,9 +86,12 @@ class Dashboard(QWidget):
                 border: 1px solid #585858;
             }
         """)
+
+        self.toggle_button.setText("<<")
+        self.toggle_button.move(199, 41)
+        
         # Make it clickable
         self.toggle_button.clicked.connect(self.toggleLeftSidebar)
-        QTimer.singleShot(0, self.updateToggleButtonPosition)
 
     def createTaskbar(self):
         # Create a toolbar for the taskbar
@@ -162,10 +165,8 @@ class Dashboard(QWidget):
             self.left_sidebar.hide()
         else:
             self.left_sidebar.show()
-        
-        # Update the toggle button text
-        self.toggle_button.setText("<<")
-        self.toggle_button.move(199, 41)
+
+        self.updateToggleButtonPosition()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
