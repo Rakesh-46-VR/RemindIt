@@ -140,6 +140,10 @@ celerybeat.pid
 .mp3
 .wav
 
+# pickle
+.pickle
+.pkl
+
 # Environments
 .env
 .venv
