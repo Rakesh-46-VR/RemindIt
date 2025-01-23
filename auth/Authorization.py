@@ -13,7 +13,9 @@ REDIRECT_URI = os.getenv('REDIRECT_URI')
 TOKEN_PATH = os.getenv('TOKEN_PATH')
 
 class AuthManager:
-    def __init__(self):
+
+    def __init__(self, login_callback):
+        self.callback = login_callback
         self.access_token = None
         self.refresh_token = None
         self.app = Flask(__name__)
@@ -36,7 +38,7 @@ class AuthManager:
                 with open(TOKEN_PATH, "wb") as file:
                     pickle.dump(data_to_save, file)
                     self.loggedin = True
-                    
+                
                 # Respond to the client before shutting down the server
                 response = {"message": "Token received successfully"}
                 shutdown_thread = threading.Thread(target=self.stop_server)
@@ -55,6 +57,7 @@ class AuthManager:
     def stop_server(self):
         if self.server:
             self.server.shutdown()
+            self.callback(self.loggedin)
 
     def start_oauth_flow(self):
         auth_url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={REDIRECT_URI}"
