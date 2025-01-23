@@ -16,14 +16,15 @@ TOKEN_PATH = os.getenv('TOKEN_PATH')
 LOGO_PATH = os.getenv('ICON')
 GOOGLE_LOGO = os.getenv("GOOGLE_LOGO")
 
-class Login(QMainWindow):
-    def __init__(self, client):
-        super().__init__()
+class Login(QWidget):
+    def __init__(self, client, callback, parent=None):
+        super().__init__(parent)
 
         self.supabase = client
+        self.callback = callback
+
         self.windowPosSize = (200, 200, 400, 300)
-        
-        self.auth_manager = AuthManager()
+        self.auth_manager = AuthManager(self.on_login)
         
         self.setGeometry(*self.windowPosSize)
         
@@ -45,9 +46,12 @@ class Login(QMainWindow):
 
         layout.addWidget(self.login_button, alignment=Qt.AlignmentFlag.AlignTop)
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+        self.setLayout(layout)
+
+    def on_login(self, is_loggedin):
+        if(is_loggedin):
+            self.login_button.setText("Authentication successfull")
+            self.callback(is_loggedin)
 
     def login(self):
         try:
