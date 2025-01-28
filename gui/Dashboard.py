@@ -1,9 +1,9 @@
 from PyQt6.QtWidgets import (
-    QApplication, QToolBar, QStatusBar, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy, QLabel
+    QApplication, QToolBar, QStatusBar, QListWidget, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QSizePolicy, QLabel, QStackedWidget
 )
-from PyQt6.QtCore import QTimer
 from ui.Picture import Logo
 from supabase import Client
+from ui.ScrollableWidget import OrderableList
 
 class Dashboard(QWidget):
     
@@ -24,6 +24,8 @@ class Dashboard(QWidget):
         self.createCentralArea()
         self.createStatusbar()
         self.createFloatingButton()
+
+        # Stacked layout for various functions
         
     def createCentralArea(self):
         # Central layout (Horizontal)
@@ -37,33 +39,39 @@ class Dashboard(QWidget):
         self.createLeftSidebar()
 
         # Create a placeholder for the main content
-        self.main_content = QWidget()
+        self.stacked_widget = QStackedWidget(self)
+        self.stacked_widget.addWidget(OrderableList("List1"))
+        self.stacked_widget.addWidget(OrderableList("List2"))
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.stacked_widget)
+
+        self.main_content = QWidget()        
         self.main_content.setStyleSheet("""
             background-color: #272627;
         """)
+
+        self.main_content.setLayout(hbox)
         self.central_layout.addWidget(self.main_content)
 
     def createLeftSidebar(self):
         # Create a fixed left sidebar
-        self.left_sidebar = QWidget(self)
+        self.left_sidebar = QListWidget(self)
         self.left_sidebar.setFixedWidth(200)
         self.left_sidebar.setStyleSheet("""
             background-color: #121212;
             border-right: 1px solid #585858;
         """)
         
-        # Sidebar layout
-        sidebar_layout = QVBoxLayout()
-        sidebar_layout.setSpacing(10)
-        sidebar_layout.setContentsMargins(10, 10, 10, 10)
-        self.left_sidebar.setLayout(sidebar_layout)
-
-        sidebar_layout.addWidget(QPushButton("Task List"))
-        sidebar_layout.addWidget(QPushButton("View Progress"))
-        sidebar_layout.addStretch()
+        self.left_sidebar.insertItem(0, "Daily Tasks")
+        self.left_sidebar.insertItem(1, "View Progress")
+        self.left_sidebar.currentRowChanged.connect(self.display)
 
         # Add the sidebar to the central layout
         self.central_layout.addWidget(self.left_sidebar)
+    
+    def display(self, i):
+        self.stacked_widget.setCurrentIndex(i)
 
     def updateToggleButtonPosition(self):
         if self.left_sidebar.isVisible():
