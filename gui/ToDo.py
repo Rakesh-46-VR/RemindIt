@@ -1,84 +1,112 @@
-from PyQt6.QtCore import QMimeData, Qt, QTimer
-from PyQt6.QtGui import QDrag, QPixmap
-from PyQt6.QtWidgets import QApplication, QScrollArea, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFrame, QLabel, QSpacerItem, QSizePolicy
-
-
-class DragButton(QPushButton):
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-        self.setStyleSheet("""
-            QPushButton {
-                background-color: #121212;
-                padding: 5px;
-                min-width: 300px;
-                max-width: 300px;
-            }
-        """)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
-
-    def mouseMoveEvent(self, e):
-        if e.buttons() == Qt.MouseButton.LeftButton:
-            drag = QDrag(self)
-            mime = QMimeData()
-            mime.setText(self.text())
-            drag.setMimeData(mime)
-
-            pixmap = QPixmap(self.size())
-            self.render(pixmap)
-            drag.setPixmap(pixmap)
-            drag.setHotSpot(e.position().toPoint())
-            drag.exec(Qt.DropAction.MoveAction)
-
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication, QScrollArea, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFrame, QLabel, QSpacerItem, QSizePolicy
+)
+from ui.Button import DragButton
 
 class DragWidget(QWidget):
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
+        self.setup_ui()
+        # Timer for auto-scrolling
+        self.scroll_timer = QTimer()
+        self.scroll_timer.timeout.connect(self.auto_scroll)
+        self.scroll_direction = 0  # -1 for up, 1 for down
+        self.setMaximumWidth(600)
 
-        # Main layout
+    def setup_ui(self):
         self.main_layout = QVBoxLayout()
-        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.main_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.main_layout.setSpacing(10)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Label at the top
+        # Header
         label = QLabel("Your Daily To-Do List", self)
         label.setStyleSheet("""
             QLabel {
-                font-size: 20px;
+                font-size: 24px;
                 font-weight: bold;
-                margin-bottom: 10px;
+                color: white;
+                margin-bottom: 20px;
             }
         """)
         self.main_layout.addWidget(label)
 
-        # Scroll area containing input, buttons, and draggable layout
+        # Scroll area
         self.scroll_area = QScrollArea(self)
+        self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                width: 12px;
+            }
+            QScrollBar::handle:vertical {
+                background: #404040;
+                border-radius: 6px;
+                min-height: 30px;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        """)
 
-        # Container widget inside scroll area
         container = QWidget()
         container_layout = QVBoxLayout(container)
         container_layout.setSpacing(10)
-        container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Draggable buttons layout
         self.blayout = QVBoxLayout()
-        self.blayout.setSpacing(5)
+        self.blayout.setSpacing(8)
         self.blayout.setContentsMargins(0, 5, 0, 5)
-        self.blayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.blayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         container_layout.addLayout(self.blayout)
 
-        # Input field
+        # Input area
+        input_container = QWidget()
+        input_layout = QVBoxLayout(input_container)
+        input_layout.setSpacing(10)
+
         self.input_field = QLineEdit(self)
         self.input_field.setPlaceholderText("Add a new task...")
-        self.input_field.setFixedHeight(30)
-        container_layout.addWidget(self.input_field)
+        self.input_field.setStyleSheet("""
+            QLineEdit {
+                padding: 12px;
+                background-color: #1a1a1a;
+                border: 1px solid #2c2c2c;
+                border-radius: 6px;
+                color: white;
+                font-size: 14px;
+            }
+            QLineEdit:focus {
+                border: 1px solid #404040;
+            }
+        """)
 
-        # Submit button
-        self.submit_button = QPushButton("Submit", self)
+        self.submit_button = QPushButton("Add Task", self)
         self.submit_button.clicked.connect(self.addTask)
-        container_layout.addWidget(self.submit_button)
+        self.submit_button.setStyleSheet("""
+            QPushButton {
+                padding: 12px;
+                background-color: #2c2c2c;
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #404040;
+            }
+        """)
 
-        # Spacer at the bottom
+        input_layout.addWidget(self.input_field)
+        input_layout.addWidget(self.submit_button)
+        container_layout.addWidget(input_container)
+
         spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         container_layout.addItem(spacer)
 
@@ -86,9 +114,9 @@ class DragWidget(QWidget):
         self.main_layout.addWidget(self.scroll_area)
         self.setLayout(self.main_layout)
 
-        # Create placeholder widget for drop target
+        # Placeholder for drag and drop
         self.placeholder = QFrame()
-        self.placeholder.setFixedHeight(40)
+        self.placeholder.setFixedHeight(50)
         self.placeholder.setStyleSheet("""
             QFrame {
                 background-color: #2c2c2c;
@@ -99,21 +127,43 @@ class DragWidget(QWidget):
         """)
         self.placeholder.hide()
 
-        # Track the dragged widget and last position
+        # Tracking variables
         self.dragged_widget = None
         self.last_insert_index = -1
-        self.drag_start_pos = None
+
+        # Set dark theme
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #121212;
+                color: white;
+            }
+        """)
+
+    def auto_scroll(self):
+        """Simplified auto-scroll function"""
+        if self.scroll_direction != 0:
+            scroll_bar = self.scroll_area.verticalScrollBar()
+            scroll_bar.setValue(scroll_bar.value() + (10 * self.scroll_direction))
 
     def dragEnterEvent(self, e):
         if isinstance(e.source(), DragButton):
             self.dragged_widget = e.source()
-            self.drag_start_pos = e.position()
             e.accept()
         else:
             e.ignore()
 
     def find_insert_position(self, pos):
-        """Find the insertion position with reduced sensitivity"""
+        """Find insertion position with improved stability"""
+        # Add hysteresis - only update position if mouse has moved significantly
+        HYSTERESIS = 30  # pixels of movement required before position change
+        
+        # If we have a last position, check if movement is significant
+        if hasattr(self, '_last_y') and abs(pos.y() - self._last_y) < HYSTERESIS:
+            return self.last_insert_index
+        
+        self._last_y = pos.y()
+        
+        # Calculate positions with dead zones
         for i in range(self.blayout.count()):
             widget = self.blayout.itemAt(i).widget()
             if not widget or widget is self.placeholder:
@@ -123,15 +173,15 @@ class DragWidget(QWidget):
             widget_pos = self.mapFromGlobal(widget_pos)
             widget_height = widget.height()
             
-            # Define a "dead zone" in the middle of each button (40% of height)
-            dead_zone_start = widget_pos.y() + (widget_height * 0.3)
-            dead_zone_end = widget_pos.y() + (widget_height * 0.7)
+            # Create three zones: top (30%), middle (40%), bottom (30%)
+            top_zone = widget_pos.y() + (widget_height * 0.3)
+            bottom_zone = widget_pos.y() + (widget_height * 0.7)
             
-            if pos.y() < dead_zone_start:
+            if pos.y() < top_zone:
                 return i
-            elif pos.y() < dead_zone_end:
-                # If in dead zone, maintain last position
-                return self.last_insert_index
+            elif pos.y() < bottom_zone:
+                # Middle zone - maintain current position
+                return self.last_insert_index if self.last_insert_index != -1 else i
 
         return self.blayout.count()
 
@@ -140,33 +190,49 @@ class DragWidget(QWidget):
             return
 
         pos = e.position()
+        source_index = self.blayout.indexOf(self.dragged_widget)
         insert_index = self.find_insert_position(pos)
-        
-        # Only update if position has changed
-        if insert_index != self.last_insert_index:
-            # Remove placeholder from current position
-            if self.placeholder.parent():
-                self.blayout.removeWidget(self.placeholder)
 
-            # Don't insert at the dragged widget's position
-            if insert_index > self.blayout.indexOf(self.dragged_widget):
-                insert_index -= 1
+        # Handle auto-scrolling
+        self.handle_auto_scroll(pos.y())
 
-            # Insert placeholder at new position
-            if insert_index >= 0 and insert_index <= self.blayout.count():
-                self.blayout.insertWidget(insert_index, self.placeholder)
-                self.last_insert_index = insert_index
-                
-            self.placeholder.show()
+        # Don't update if we're in the same position
+        if insert_index == self.last_insert_index and self.placeholder.isVisible():
+            e.accept()
+            return
 
-        e.accept()
-
-    def dragLeaveEvent(self, e):
+        # Always remove placeholder before inserting at new position
         if self.placeholder.parent():
             self.blayout.removeWidget(self.placeholder)
-        self.placeholder.hide()
-        self.last_insert_index = -1
+
+        # Adjust insert index if needed
+        if insert_index > source_index:
+            insert_index -= 1
+
+        self.blayout.insertWidget(insert_index, self.placeholder)
+        self.placeholder.show()
+
+        self.last_insert_index = insert_index
         e.accept()
+
+    def handle_auto_scroll(self, y_pos):
+        """Optimized auto-scroll detection"""
+        threshold = 40
+        
+        # Determine scroll direction
+        if y_pos < threshold:
+            self.scroll_direction = -1
+        elif y_pos > self.height() - threshold:
+            self.scroll_direction = 1
+        else:
+            self.scroll_direction = 0
+
+        # Simplified timer management
+        if self.scroll_direction != 0:
+            if not self.scroll_timer.isActive():
+                self.scroll_timer.start(30)
+        else:
+            self.scroll_timer.stop()
 
     def dropEvent(self, e):
         if not isinstance(e.source(), DragButton):
@@ -177,46 +243,54 @@ class DragWidget(QWidget):
         source_index = self.blayout.indexOf(source_widget)
         target_index = self.blayout.indexOf(self.placeholder)
 
-        # Handle invalid indices
         if source_index == -1 or target_index == -1:
             self.dragLeaveEvent(e)
             e.ignore()
             return
 
-        # Remove placeholder
         self.blayout.removeWidget(self.placeholder)
         self.placeholder.hide()
-
-        # Remove widget from old position
         self.blayout.removeWidget(source_widget)
 
-        # Adjust target index if needed
         if target_index > source_index:
             target_index -= 1
 
-        # Insert at new position
         self.blayout.insertWidget(target_index, source_widget)
-        
-        # Reset tracking variables
+
+        # Stop scrolling when dropping
+        self.scroll_direction = 0
+        self.scroll_timer.stop()
+
         self.dragged_widget = None
         self.last_insert_index = -1
-        self.drag_start_pos = None
-        
+        if hasattr(self, '_last_y'):
+            del self._last_y
+        e.accept()
+
+    def dragLeaveEvent(self, e):
+        """
+        Handle drag leave event without depending on position
+        """
+        # Simply clean up the placeholder
+        if self.placeholder.parent():
+            self.blayout.removeWidget(self.placeholder)
+        self.placeholder.hide()
+        self.last_insert_index = -1
+        if hasattr(self, '_last_y'):
+            del self._last_y
         e.accept()
 
     def addTask(self):
         text = self.input_field.text()
         if text.strip():
             btn = DragButton(text)
-            btn.setAcceptDrops(True)
             self.blayout.addWidget(btn)
             self.input_field.clear()
-
 
 if __name__ == "__main__":
     app = QApplication([])
     w = DragWidget()
     w.setWindowTitle("To-Do List")
-    w.resize(400, 400)
+    w.resize(400, 600)
     w.show()
     app.exec()
