@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QMimeData, Qt
 from PyQt6.QtGui import QDrag, QPixmap
 from PyQt6.QtWidgets import (
-    QPushButton, QDialog, QVBoxLayout, QLabel, QLineEdit, QTimeEdit, QDialogButtonBox, QSizePolicy
+    QPushButton, QDialog, QVBoxLayout, QLabel, QLineEdit, QTimeEdit, QDialogButtonBox, QSizePolicy, QApplication
 )
 
 class DragButton(QPushButton):
