@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
 from ui.Picture import Logo
 from supabase import Client
 from ui.ScrollableWidget import OrderableList
+from gui.ToDo import DragWidget
 
 class Dashboard(QWidget):
     
@@ -23,7 +24,7 @@ class Dashboard(QWidget):
         self.createTaskbar()
         self.createCentralArea()
         self.createStatusbar()
-        self.createFloatingButton()
+        # self.createFloatingButton()
 
         # Stacked layout for various functions
         
@@ -40,7 +41,9 @@ class Dashboard(QWidget):
 
         # Create a placeholder for the main content
         self.stacked_widget = QStackedWidget(self)
-        self.stacked_widget.addWidget(OrderableList("List1"))
+        self.stacked_widget.setContentsMargins(0, 0, 0, 0)
+        dw = DragWidget()
+        self.stacked_widget.addWidget(dw)
         self.stacked_widget.addWidget(OrderableList("List2"))
 
         hbox = QHBoxLayout()
@@ -48,7 +51,7 @@ class Dashboard(QWidget):
 
         self.main_content = QWidget()        
         self.main_content.setStyleSheet("""
-            background-color: #272627;
+            background-color: #121212;
         """)
 
         self.main_content.setLayout(hbox)
@@ -58,48 +61,66 @@ class Dashboard(QWidget):
         # Create a fixed left sidebar
         self.left_sidebar = QListWidget(self)
         self.left_sidebar.setFixedWidth(200)
-        self.left_sidebar.setStyleSheet("""
-            background-color: #121212;
-            border-right: 1px solid #585858;
-        """)
-        
-        self.left_sidebar.insertItem(0, "Daily Tasks")
-        self.left_sidebar.insertItem(1, "View Progress")
-        self.left_sidebar.currentRowChanged.connect(self.display)
 
-        # Add the sidebar to the central layout
+        self.left_sidebar.insertItem(0, "Edit Daily Tasks")
+        self.left_sidebar.insertItem(1, "Report Tasks")
+        self.left_sidebar.setCurrentRow(0)
+        self.left_sidebar.setStyleSheet("""
+            QListWidget {
+                background-color: #121212;
+                border-right: 2px solid #ffffff;
+                margin-right:2px;
+            }
+            QListWidget::item {
+                color: white;
+                padding: 10px;
+                border-bottom: 1px solid #303030;
+            }
+            QListWidget::item:selected {
+                background-color: #2c2c2c;
+                border-left: 4px solid #ff9800;
+                color: white;
+            }
+            QListWidget::item:hover {
+                background-color: #1a1a1a;
+            }
+        """)
+
+        self.left_sidebar.currentRowChanged.connect(self.display)
+        
         self.central_layout.addWidget(self.left_sidebar)
     
     def display(self, i):
         self.stacked_widget.setCurrentIndex(i)
 
-    def updateToggleButtonPosition(self):
-        if self.left_sidebar.isVisible():
-            # Position the button on the right border of the sidebar
-            self.toggle_button.setText("<<")
-            self.toggle_button.move(199, 41)
-        else:
-            # Position the button near the left border of the window
-            self.toggle_button.setText(">>")
-            self.toggle_button.move(0, 41)
+    # def updateToggleButtonPosition(self):
+    #     if self.left_sidebar.isVisible():
+    #         # Position the button on the right border of the sidebar
+    #         self.toggle_button.setText("<<")
+    #         self.toggle_button.move(177, 41)
+    #     else:
+    #         # Position the button near the left border of the window
+    #         self.toggle_button.setText(">>")
+    #         self.toggle_button.move(0, 41)
 
-    def createFloatingButton(self):
-        # Create a toggle button that floats above other widgets
-        self.toggle_button = QPushButton(">>", self)
-        self.toggle_button.setToolTip("Toggle Sidebar")
-        self.toggle_button.setFixedWidth(25)
-        self.toggle_button.setFixedHeight(25)
-        self.toggle_button.setStyleSheet("""
-            QPushButton {
-                border: 1px solid #585858;
-            }
-        """)
+    # def createFloatingButton(self):
+    #     # Create a toggle button that floats above other widgets
+    #     self.toggle_button = QPushButton(">>", self)
+    #     self.toggle_button.setToolTip("Toggle Sidebar")
+    #     self.toggle_button.setFixedWidth(25)
+    #     self.toggle_button.setFixedHeight(25)
+    #     self.toggle_button.setStyleSheet("""
+    #         QPushButton {
+    #             border: 1px solid #585858;
+    #             background-color:white;
+    #         }
+    #     """)
 
-        self.toggle_button.setText("<<")
-        self.toggle_button.move(199, 41)
+    #     self.toggle_button.setText("<<")
+    #     self.toggle_button.move(177, 41)
         
-        # Make it clickable
-        self.toggle_button.clicked.connect(self.toggleLeftSidebar)
+    #     # Make it clickable
+    #     self.toggle_button.clicked.connect(self.toggleLeftSidebar)
 
     def createTaskbar(self):
         # Create a toolbar for the taskbar
@@ -168,13 +189,13 @@ class Dashboard(QWidget):
         # Add the status bar to the main layout
         self.main_layout.addWidget(self.status_bar)
 
-    def toggleLeftSidebar(self):
-        if self.left_sidebar.isVisible():
-            self.left_sidebar.hide()
-        else:
-            self.left_sidebar.show()
+    # def toggleLeftSidebar(self):
+    #     if self.left_sidebar.isVisible():
+    #         self.left_sidebar.hide()
+    #     else:
+    #         self.left_sidebar.show()
 
-        self.updateToggleButtonPosition()
+    #     self.updateToggleButtonPosition()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
