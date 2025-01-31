@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QApplication, QScrollArea, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFrame, QLabel, QSpacerItem, QSizePolicy
 )
 from ui.Button import DragButton
+from ui.Input import Input
 
 class DragWidget(QWidget):
     def __init__(self):
@@ -67,44 +68,8 @@ class DragWidget(QWidget):
         container_layout.addLayout(self.blayout)
 
         # Input area
-        input_container = QWidget()
-        input_layout = QVBoxLayout(input_container)
-        input_layout.setSpacing(10)
+        input_container = Input(self.blayout)
 
-        self.input_field = QLineEdit(self)
-        self.input_field.setPlaceholderText("Add a new task...")
-        self.input_field.setStyleSheet("""
-            QLineEdit {
-                padding: 12px;
-                background-color: #1a1a1a;
-                border: 1px solid #2c2c2c;
-                border-radius: 6px;
-                color: white;
-                font-size: 14px;
-            }
-            QLineEdit:focus {
-                border: 1px solid #404040;
-            }
-        """)
-
-        self.submit_button = QPushButton("Add Task", self)
-        self.submit_button.clicked.connect(self.addTask)
-        self.submit_button.setStyleSheet("""
-            QPushButton {
-                padding: 12px;
-                background-color: #2c2c2c;
-                border: none;
-                border-radius: 6px;
-                color: white;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background-color: #404040;
-            }
-        """)
-
-        input_layout.addWidget(self.input_field)
-        input_layout.addWidget(self.submit_button)
         container_layout.addWidget(input_container)
 
         spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
@@ -280,12 +245,12 @@ class DragWidget(QWidget):
             del self._last_y
         e.accept()
 
-    def addTask(self):
-        text = self.input_field.text()
-        if text.strip():
-            btn = DragButton(text)
-            self.blayout.addWidget(btn)
-            self.input_field.clear()
+    # def addTask(self):
+    #     text = self.input_field.text()
+    #     if text.strip():
+    #         btn = DragButton(text)
+    #         self.blayout.addWidget(btn)
+    #         self.input_field.clear()
 
 if __name__ == "__main__":
     app = QApplication([])
