@@ -160,9 +160,13 @@ class Input(QWidget):
         description = self.description_input.text().strip()  
         schedule = self.schedule_input.time().toString("hh:mm AP")
 
+        # Remove time pattern from title if present
+        title = re.sub(time_pattern, "", title).strip()
+
         if(title and description):
             btn = DragButton(title, description, schedule)
             self.blayout.addWidget(btn)
             self.title_input.clear()
             self.description_input.clear()
             self.schedule_input.clear()
+    
