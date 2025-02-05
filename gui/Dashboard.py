@@ -4,14 +4,14 @@ from PyQt6.QtWidgets import (
 from ui.Picture import Logo
 from supabase import Client
 from ui.ScrollableWidget import OrderableList
-from gui.ToDo import DragWidget
+from gui.ToDo import DailyTasks
 
 class Dashboard(QWidget):
     
     def __init__(self, client:Client, parent=None):
         super().__init__(parent)
         self.supabase = client
-        self.windowPosSize = (200, 200, 800, 600)
+        self.windowPosSize = (2020, 300, 880, 600)
         # Set main window title and size
         self.setGeometry(*self.windowPosSize)
 
@@ -24,7 +24,6 @@ class Dashboard(QWidget):
         self.createTaskbar()
         self.createCentralArea()
         self.createStatusbar()
-        # self.createFloatingButton()
 
         # Stacked layout for various functions
         
@@ -42,9 +41,10 @@ class Dashboard(QWidget):
         # Create a placeholder for the main content
         self.stacked_widget = QStackedWidget(self)
         self.stacked_widget.setContentsMargins(0, 0, 0, 0)
-        dw = DragWidget()
+
+        dw = DailyTasks()
         self.stacked_widget.addWidget(dw)
-        self.stacked_widget.addWidget(OrderableList("List2"))
+        self.stacked_widget.addWidget(OrderableList("Task Reporting"))
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.stacked_widget)
@@ -92,35 +92,6 @@ class Dashboard(QWidget):
     
     def display(self, i):
         self.stacked_widget.setCurrentIndex(i)
-
-    # def updateToggleButtonPosition(self):
-    #     if self.left_sidebar.isVisible():
-    #         # Position the button on the right border of the sidebar
-    #         self.toggle_button.setText("<<")
-    #         self.toggle_button.move(177, 41)
-    #     else:
-    #         # Position the button near the left border of the window
-    #         self.toggle_button.setText(">>")
-    #         self.toggle_button.move(0, 41)
-
-    # def createFloatingButton(self):
-    #     # Create a toggle button that floats above other widgets
-    #     self.toggle_button = QPushButton(">>", self)
-    #     self.toggle_button.setToolTip("Toggle Sidebar")
-    #     self.toggle_button.setFixedWidth(25)
-    #     self.toggle_button.setFixedHeight(25)
-    #     self.toggle_button.setStyleSheet("""
-    #         QPushButton {
-    #             border: 1px solid #585858;
-    #             background-color:white;
-    #         }
-    #     """)
-
-    #     self.toggle_button.setText("<<")
-    #     self.toggle_button.move(177, 41)
-        
-    #     # Make it clickable
-    #     self.toggle_button.clicked.connect(self.toggleLeftSidebar)
 
     def createTaskbar(self):
         # Create a toolbar for the taskbar
@@ -188,14 +159,6 @@ class Dashboard(QWidget):
 
         # Add the status bar to the main layout
         self.main_layout.addWidget(self.status_bar)
-
-    # def toggleLeftSidebar(self):
-    #     if self.left_sidebar.isVisible():
-    #         self.left_sidebar.hide()
-    #     else:
-    #         self.left_sidebar.show()
-
-    #     self.updateToggleButtonPosition()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
