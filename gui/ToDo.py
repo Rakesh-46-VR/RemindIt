@@ -1,20 +1,21 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
-    QApplication, QScrollArea, QVBoxLayout, QWidget, QLineEdit, QPushButton, QFrame, QLabel, QSpacerItem, QSizePolicy
+    QApplication, QScrollArea, QVBoxLayout, QWidget, QFrame, QLabel, QSpacerItem, QSizePolicy
 )
 from ui.Button import DragButton
 from ui.Input import Input
 
-class DragWidget(QWidget):
+class DailyTasks(QWidget):
     def __init__(self):
         super().__init__()
         self.setAcceptDrops(True)
         self.setup_ui()
+        
         # Timer for auto-scrolling
         self.scroll_timer = QTimer()
         self.scroll_timer.timeout.connect(self.auto_scroll)
         self.scroll_direction = 0  # -1 for up, 1 for down
-        self.setMaximumWidth(600)
+        self.setMaximumWidth(800)
 
     def setup_ui(self):
         self.main_layout = QVBoxLayout()
@@ -81,11 +82,11 @@ class DragWidget(QWidget):
 
         # Placeholder for drag and drop
         self.placeholder = QFrame()
-        self.placeholder.setFixedHeight(50)
+        self.placeholder.setFixedHeight(80)
         self.placeholder.setStyleSheet("""
             QFrame {
                 background-color: #2c2c2c;
-                border: 2px dashed #505050;
+                border: 2px dashed #ff9800;
                 border-radius: 4px;
                 margin: 5px 0;
             }
@@ -245,16 +246,9 @@ class DragWidget(QWidget):
             del self._last_y
         e.accept()
 
-    # def addTask(self):
-    #     text = self.input_field.text()
-    #     if text.strip():
-    #         btn = DragButton(text)
-    #         self.blayout.addWidget(btn)
-    #         self.input_field.clear()
-
 if __name__ == "__main__":
     app = QApplication([])
-    w = DragWidget()
+    w = DailyTasks()
     w.setWindowTitle("To-Do List")
     w.resize(400, 600)
     w.show()
