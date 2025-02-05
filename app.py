@@ -10,6 +10,8 @@ from utils.session import existsSession
 
 load_dotenv()
 
+os.environ['QT_QPA_PLATFORM'] = 'xcb'
+
 SUPABASE_URL = os.getenv('SUPABASE_URL')  # Replace with your Supabase URL
 SUPABASE_API_KEY = os.getenv('SUPABASE_API_KEY')
 
@@ -18,7 +20,7 @@ class MainApp(QMainWindow):
         super().__init__()
         # Create supabase client
         self.supabase = create_client(SUPABASE_URL, SUPABASE_API_KEY)
-
+        
         existsSession(self.supabase)
 
         self.setWindowTitle("RemindIt")
